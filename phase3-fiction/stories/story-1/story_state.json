@@ -1,0 +1,47 @@
+{
+  "world_name": "Saltreach",
+  "target_chapter_count": 3,
+  "written_chapter_count": 1,
+  "progress_percent": 33,
+  "closing_threshold": 80,
+  "characters": [
+    {
+      "name": "Ada Vane",
+      "status": "alive",
+      "last_seen_chapter": 0
+    },
+    {
+      "name": "Joss Vane",
+      "status": "alive",
+      "last_seen_chapter": 0
+    },
+    {
+      "name": "Mara Quill",
+      "status": "alive",
+      "last_seen_chapter": 0
+    }
+  ],
+  "open_threads": [
+    {
+      "thread": "Ada has taken over the lighthouse night watch because Joss can no longer trim the wicks reliably.",
+      "weight": "main",
+      "opened_chapter": 1
+    },
+    {
+      "thread": "Ada has noticed the old logbook covering the year the Wren sank.",
+      "weight": "main",
+      "opened_chapter": 1
+    },
+    {
+      "thread": "Ada and Mara have renewed their friendship, but Mara's hurt over Ada's long absence remains unresolved.",
+      "weight": "side",
+      "opened_chapter": 1
+    },
+    {
+      "thread": "Joss quietly pays for the ferry's lamp oil, and his reason remains unexplained.",
+      "weight": "side",
+      "opened_chapter": 1
+    }
+  ],
+  "closed_threads": []
+}

@@ -1,0 +1,44 @@
+{
+  "erendiz": {
+    "processed_sources": [
+      "castle-of-otranto",
+      "kalevala",
+      "mabinogion",
+      "odyssey",
+      "poetic-edda",
+      "turkish-fairy-tales"
+    ],
+    "successful_rounds": 1,
+    "attempt": 0,
+    "status": "complete",
+    "reason": ""
+  },
+  "wilson": {
+    "processed_sources": [
+      "castle-of-otranto",
+      "kalevala",
+      "mabinogion",
+      "odyssey",
+      "poetic-edda",
+      "turkish-fairy-tales"
+    ],
+    "successful_rounds": 1,
+    "attempt": 0,
+    "status": "complete",
+    "reason": ""
+  },
+  "tyler": {
+    "processed_sources": [
+      "castle-of-otranto",
+      "kalevala",
+      "mabinogion",
+      "odyssey",
+      "poetic-edda",
+      "turkish-fairy-tales"
+    ],
+    "successful_rounds": 1,
+    "attempt": 0,
+    "status": "complete",
+    "reason": ""
+  }
+}

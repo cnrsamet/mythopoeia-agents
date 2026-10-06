@@ -1,0 +1,91 @@
+{
+  "world": {
+    "genre": "Quiet literary fiction",
+    "period": "An unnamed northern coast, early twentieth century, before radio reached small places. News travels by boat, letter and the causeway.",
+    "geography_summary": "Saltreach is a small tidal island joined to the mainland by a stone causeway that is dry for about three hours twice a day. One town of forty houses sits on the sheltered side, facing the causeway; the lighthouse stands alone on the exposed western point above the Teeth, a reef that shows only at low water. Everything on the island happens on the clock of the tide: deliveries, visits, doctors, funerals.",
+    "historical_events": [
+      {
+        "event": "The supply boat Wren strikes the Teeth on a winter night and sinks; her master, Tom Quill, and one deckhand drown. The inquiry finds the light was burning and calls it an accident of weather.",
+        "date": "22 years before the story"
+      },
+      {
+        "event": "Joss Vane's wife, Lena, dies of fever two weeks after the wreck.",
+        "date": "22 years before the story"
+      },
+      {
+        "event": "Ada Vane, then twelve, is sent to her aunt on the mainland and does not return to live on the island.",
+        "date": "21 years before the story"
+      }
+    ]
+  },
+  "story_skeleton": {
+    "genre": "Quiet literary fiction",
+    "narrative_form": "Single point of view, close third person on Ada, past tense",
+    "characters": [
+      {
+        "name": "Ada Vane",
+        "role": "Point-of-view character",
+        "trait": "34, a bookkeeper on the mainland. Returns to Saltreach when her father's hands begin to fail. Exact, guarded, notices numbers before faces."
+      },
+      {
+        "name": "Joss Vane",
+        "role": "Ada's father, keeper of the Saltreach light",
+        "trait": "67. Has kept the light for forty years and its logbook in a clean hand. Talks about weather and wicks so he does not have to talk about anything else."
+      },
+      {
+        "name": "Mara Quill",
+        "role": "Ada's childhood friend, runs the ferry and the post",
+        "trait": "40. Daughter of the drowned master of the Wren. Loud, practical, the one person on the island who still says Ada's mother's name out loud."
+      }
+    ],
+    "relationships": [
+      {
+        "who": "Ada Vane",
+        "with": "Joss Vane",
+        "relationship": "Father and daughter who have written short, polite letters for twenty years and have not had a real conversation in that time."
+      },
+      {
+        "who": "Ada Vane",
+        "with": "Mara Quill",
+        "relationship": "Friends as girls, separated by the wreck and Ada's leaving. Mara is glad she is back and hurt that she left."
+      },
+      {
+        "who": "Joss Vane",
+        "with": "Mara Quill",
+        "relationship": "He has quietly paid part of her ferry's upkeep for years. She does not know why and has never asked."
+      }
+    ],
+    "plot": [
+      {
+        "stage": "Return",
+        "summary": "Ada crosses the causeway on a falling tide and finds her father unable to trim the wicks. She takes over the night watch and the logbook."
+      },
+      {
+        "stage": "The page",
+        "summary": "Reading the old logbooks, Ada finds the night of the Wren: the entries for that hour are written in different ink, in her father's hand, more carefully than any other page."
+      },
+      {
+        "stage": "What the light did",
+        "summary": "Ada learns the lamp went dark for most of an hour that night, while Joss crossed to the town for the doctor for Lena. He wrote the false hours afterwards and has lived inside them since."
+      },
+      {
+        "stage": "Who should know",
+        "summary": "Ada has to decide whether to tell Mara. The story ends with the telling, or the choice not to, made by the people on the island and no one else."
+      }
+    ]
+  },
+  "constraint_compliance": [
+    {
+      "constraint": "Magic is very rare.",
+      "how_met": "Magic is inactive for this world. There is no magic or supernatural element at all; the only 'signs' are tide tables, ink and the light."
+    },
+    {
+      "constraint": "No villain without a reason.",
+      "how_met": "Joss let the light go dark to save his dying wife and lied to protect his daughter and himself. His harm is real and his reason can be followed."
+    },
+    {
+      "constraint": "No rescue from outside.",
+      "how_met": "No inquiry, stranger or new evidence arrives to settle the matter. Only Ada, Joss and Mara decide what happens to the truth."
+    }
+  ]
+}

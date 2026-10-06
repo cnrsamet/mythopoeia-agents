@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+scripts/run_logs/
+.tmp_*
+
+phase2-world/worlds/*
+!phase2-world/worlds/Saltreach/
+phase2-world/cosmology/
+phase2-world/peoples-geography/
+phase2-world/languages-names/
+
+phase3-fiction/stories/*
+!phase3-fiction/stories/story-1/
