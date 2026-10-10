@@ -121,7 +121,7 @@ The agents' running summaries had three jobs: collect patterns that repeat, keep
 - **A lie repeated by an institution becomes holy.** In *Don Quixote* and *The Castle of Otranto*, a story kept going long enough turns into truth.
 - **Every ruling order invents a "wild" outsider** to prove it is needed.
 
-### Ideas worth stealing for a world
+### Ideas worth borrowing for a world
 
 These showed up in a single book, but the agents kept them because they work as world-building tools:
 
@@ -136,16 +136,20 @@ These showed up in a single book, but the agents kept them because they work as 
 
 After a while some topics stopped teaching anything new: thresholds, fate, how power justifies itself, women traded for alliances. The summaries flagged these as "saturated", which told me to stop adding books like them.
 
-### Gaps the agents found
+### What my book list was missing
 
-- **Too European.** Almost nothing from China, India, Africa or Southeast Asia, so some "universal" patterns might just be one culture repeating itself.
-- **Only kings and heroes.** Nobody runs a shop, works a trade or helps the neighbours.
-- **Few women talking to women.** Strong female characters, but hardly any long conversations between women where they carry the story.
-- **No modern formats.** No chat logs, in-game documents or recorded messages. For worlds meant for games, this is the biggest gap.
+I picked the 47 books myself, and most of them came from European and Mediterranean traditions, with heroes who were mostly kings and warriors. The agents' output reflected that: they found the patterns of the culture I gave them. Seeing the results is what showed me what my list was missing, and the agents named the gaps themselves:
+
+- **Most of the world.** Almost nothing from China, India, Africa or Southeast Asia. Some patterns that look "universal" above might really be one culture repeating itself.
+- **Ordinary people.** Nobody runs a shop, works a trade or helps the neighbours.
+- **Women talking to women.** There are strong female characters, but hardly any long conversations between women where they carry the story.
+- **Modern formats.** No chat logs, in-game documents or recorded messages. For worlds meant for games, this is the biggest gap.
+
+So the next books won't be chosen by what I already know, but by what the system says it hasn't seen yet.
 
 ### An open question
 
-In 47 books the agents found no creation story where the world is made well and stays that way. The Norse world is built from a murdered giant, the Finnish one hatches from an accident, the gothic novels start from an old crime. Maybe that's the lesson: a perfect creation leaves nothing to tell, so every world needs a crack in it. Or maybe I just haven't read the right books yet (see "Too European" above). I don't know yet, and I'd like to find out.
+In 47 books the agents found no creation story where the world is made well and stays that way. The Norse world is built from a murdered giant, the Finnish one hatches from an accident, the gothic novels start from an old crime. Maybe that's the lesson: a perfect creation leaves nothing to tell, so every world needs a crack in it. Or maybe I just haven't read the right books yet (see "What my book list was missing" above). I don't know yet, and I'd like to find out.
 
 ## The hard problem: shallow prose
 
