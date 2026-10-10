@@ -228,6 +228,8 @@ All commands run from `scripts/`. Settings live in `scripts/config.py`.
 
 Developed and tested on Windows only.
 
+**A word of caution:** the agents run with wide permissions so they can work unattended (Codex without approval prompts and with network access, the Gemini CLI with permission checks skipped). They also read text from books and the web, and text like that could try to steer them. Run this in a separate folder or a virtual machine, not on a machine with anything you care about.
+
 </details>
 
 ## License
