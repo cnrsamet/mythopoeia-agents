@@ -1,32 +1,58 @@
 # Mythopoeia
 
-Mythopoeia is a multi-agent pipeline that reads source texts (myths, epics, novels), builds an original fictional world from what it learned, and then writes fiction in that world. Three CLI coding agents from three model families each read every source through a fixed lens; one of them then becomes the only author. Python scripts handle orchestration and state, and all context is passed through files in this repo.
+A system of three AI agents that read old stories (myths, epics, classic novels), find the patterns that make them work, and use those patterns to build new fictional worlds that stay consistent over time.
 
-> This is a cleaned public copy of a private working repo. It keeps the full pipeline code, the agent role files and six public-domain sources as examples. Read [What is real in this repo](#what-is-real-in-this-repo) before using the sample outputs.
+## At a glance
 
-## Architecture
+- **Three agents, three AI models, three ways of reading.** Claude reads like a mythologist, Gemini like an anthropologist, GPT like a poet. They read the same book separately, then check each other's work.
+- **Tested at scale.** In my private run the agents worked through 47 books, wrote 141 separate analyses (about 171,000 words) and went through 101 rounds of reading and review.
+- **Worlds that don't fall apart.** Every world keeps a canon of facts that can only grow, a list of rules nobody may break, and a state file that tracks characters and open storylines.
+- **Measured, not just eyeballed.** When the generated prose felt shallow, I turned "shallow" into numbers, changed the writing loop, and measured again. Some things got much better. One didn't, and the model found a way to game one of my own metrics. All of it is in this README.
 
-### Agents
+## What's real in this repo
 
-| Agent | Model (default, set in `.env`) | CLI | Phase 1 lens | Phase 2/3 role |
-|---|---|---|---|---|
-| **Erendiz** | Claude (`claude-sonnet-5`) | `claude` | Mythologist / Cosmologist: what metaphysical tension does the text answer? | None. Its work ends with its synthesis file. |
-| **Wilson** | Gemini (`Gemini 3.1 Pro (High)`) | `agy` via `agy-headless-bridge` | Anthropologist / Sociologist: what social order does the text hold up or shake? | None. Its work ends with its synthesis file. |
-| **Tyler** | GPT (`gpt-5.6-sol`, high reasoning) | `codex exec` | Poet / Narrator: how is it told, and which technique makes it last? | **Only active agent.** Builds the world and writes the fiction. |
+My private run used 47 books, two worlds and two stories. This repo keeps six of the books as examples, plus a small demo world so everything can be seen end to end.
 
-Role definitions are in [`roles/`](roles/). `CLAUDE.md`, `GEMINI.md` and `AGENTS.md` point each CLI to its own role file.
+| What | Where it came from |
+|---|---|
+| 18 analyses in [`phase1-research/sources/`](phase1-research/sources/) | Written by the agents in the original run (in Turkish), translated to English. Content unchanged. |
+| Summaries in [`phase1-research/synthesis/`](phase1-research/synthesis/) | Short demo versions I wrote from those 18 analyses. |
+| The *Saltreach* world | A small demo world I wrote by hand, in the exact format the system produces. |
+| [`phase3-fiction/stories/story-1/`](phase3-fiction/stories/story-1/) | Real output. The system set up the story, Tyler wrote chapter 1, and the revision experiment ran on it. Nothing edited. |
+| Books in [`phase1-research/raw-texts/`](phase1-research/raw-texts/) | Project Gutenberg, public domain. |
 
-**Why three agents.** The goal is to extract the essence of a literary work from several distinct points of view at once. Each agent reads the same text with a different focus, and the three readings stay separate. The lenses are not fixed to the system: they are defined only in `roles/*.md`, so a different project can give the three agents different focus areas without touching the code.
+## Why I built this
 
-**Why three model families.** The roles are split by *lens*, not by task. All three agents do the same job (read a source and analyze it) from a different angle. Using three different model families keeps the three readings from converging into one "committee voice" over many sources. The voices are never merged into one file. Tyler reads the other two syntheses only once, when a world is built.
+I don't think literature should be left to AI. That's not what this is for.
 
-**Why Tyler writes.** The author has to run for a long time, write many files and follow a growing set of rules. Tyler runs through `codex exec` in a sandboxed workspace (`--sandbox workspace-write`) and was the narrative lens from the start, so it carries that lens into writing.
+What I want is a tool for people who need worlds fast: game designers, Dungeons & Dragons game masters, anyone running a story-heavy project. Building a world is easy. Keeping it consistent across many sessions and many stories is the hard part.
 
-### Pipeline
+Humanity has thousands of years of stories that already solved these problems. Mythopoeia reads them, pulls out the patterns, and uses those patterns as a method. It's a hobby project and it's not finished. This README shows what works, what doesn't yet, and where I want to take it.
+
+## How it works
+
+The project runs in three phases. The agents never talk to each other directly. Everything they know comes from files in this repo, and every answer ends with a short machine-readable line that the Python scripts read.
+
+### The agents
+
+| Agent | Model I used | Reads like a... | Asks |
+|---|---|---|---|
+| **Erendiz** | Claude | Mythologist | What deep question about life and death is this story answering? |
+| **Wilson** | Gemini | Anthropologist | What kind of society does this story protect or shake? |
+| **Tyler** | GPT (Codex) | Poet | How is it told, and why does it still work? |
+
+The names Erendiz, Wilson and Tyler are just names I gave them. The model choices are the AI tools I happened to use, not a requirement. Any three models would work:
+
+- **Same tool, different model:** change one line in `.env`.
+- **Different tool:** add a small function in [`scripts/agents.py`](scripts/agents.py) that calls its command line and returns the answer (about 30 lines, the three existing ones are good examples), then point the agent to it. Roles, prompts and the rest of the pipeline stay the same.
+
+What matters is the setup, not the models: three separate readers with fixed lenses, who never share one voice. Each agent keeps the same lens the whole time. If three agents share one job for 47 books, their voices slowly blur into one, and using three different model families helps keep them apart. The lenses live only in [`roles/`](roles/), so a different project could give the agents different focus areas without touching the code.
+
+### The three phases
 
 ```mermaid
 flowchart TD
-    subgraph P1["Phase 1: Research (per source)"]
+    subgraph P1["Phase 1: Research (per book)"]
         C[config.py: SOURCE_NAME, ISSUE_NUMBER] --> R[run.py]
         R --> A1["pass1.py: independent reading<br/>Erendiz / Wilson / Tyler"]
         A1 -->|all COMPLETE| A2["pass2.py: each reads the other two"]
@@ -34,9 +60,9 @@ flowchart TD
         A2 -->|all COMPLETE| D[(sources/name/*.md + state.json)]
     end
     D --> S["synthesis.py: each agent reads ONLY its own past files<br/>append-only synthesis/agent.md"]
-    S --> W["build_world.py: Tyler reads all three syntheses + CONSTRAINTS.md"]
+    S --> W["build_world.py: Tyler reads all three summaries + CONSTRAINTS.md"]
     W --> WA[(architecture.json + STYLE_CONTRACT.md)]
-    WA --> ST["start_story.py (no LLM)"]
+    WA --> ST["start_story.py (no AI)"]
     ST --> SS[(story_state.json + writer-brain.md)]
     SS --> WC["write_chapter.py: Tyler writes the next chapter"]
     WC -->|CHAPTER_UPDATE JSON| SS
@@ -44,139 +70,162 @@ flowchart TD
     WC --> RV["revise.py: 3-pass revision experiment"]
 ```
 
-### How context moves between agents
+1. **Research.** For each book, all three agents first read it on their own (pass 1), then read each other's notes (pass 2). If someone finds a real gap in their own reading, that agent goes back for another round. When everyone is done, each agent writes a running summary of patterns across all the books it has read.
+2. **World building.** Tyler reads all three summaries once and builds a world: a structured file (`architecture.json`) and a style guide for how stories in this world should sound. The user decides which parts of the world exist at all (peoples, languages, magic...). Anything left empty is not created.
+3. **Stories.** Tyler writes one chapter at a time. After each chapter it sends back a small JSON update: who changed, which storylines opened or closed, which facts are now permanent. The script writes these to the story state and to the world's canon, so Tyler never edits those files directly.
 
-The agents never call each other. Everything goes through files and a small set of machine-readable lines:
+### What's where
 
-- **Task prompts** are built by the scripts for each call. They name the role file, the exact files to read and write, and the format of the answer.
-- **Decision blocks.** Every agent ends its answer with `DECISION: COMPLETE`, `DECISION: SECOND_ROUND_NEEDED` + `REASON: ...`, or `DECISION: ENRICHMENT` in pass 2. `agents.py` parses these with regex and writes them to `state.json`.
-- **Per-source state** (`phase1-research/sources/{source}/state.json`) records status, round and pass-2 status per agent. Rounds are asymmetric: an agent that finished is skipped, an agent that asked for a second round runs again with its own `REASON` fed back into the prompt. If any agent finishes a later round, everyone's pass-2 status is reset, so nobody keeps an approval based on a file that has since changed.
-- **GitHub issues** are the discussion log of Phase 1. Agents post their notices and pass-2 reactions with `gh issue comment`, each signed `-Erendiz` / `-Wilson` / `-Tyler`, since all comments come from one account.
-- **Synthesis** is append-only. `synthesis-state.json` tracks which sources each agent has already folded in, so each run only processes new ones (delta). Old rounds are never rewritten.
-- **World and story state.** `architecture.json` (world + story skeleton), `canon.json` (append-only permanent facts shared by all stories in a world), `story_state.json` (characters, open/closed threads, progress) and `writer-brain.md` (Tyler's free-form, append-only notebook). After each chapter, Tyler returns a `CHAPTER_UPDATE` JSON block. The script applies it to `story_state.json` and `canon.json`, so Tyler never edits state files directly.
+```
+mythopoeia-agents/
+├── roles/                     # who each agent is: lens, rules, output format
+├── CLAUDE.md, GEMINI.md, AGENTS.md   # point each CLI to its role file
+├── scripts/
+│   ├── config.py              # current book, world, story and switches
+│   ├── agents.py              # runs the three CLIs, reads their answers, keeps state
+│   ├── run.py                 # phase 1: pass 1 + pass 2 until all agree
+│   ├── pass1.py, pass2.py     # the two passes, also runnable on their own
+│   ├── synthesis.py           # phase 1: each agent's running summary
+│   ├── build_world.py         # phase 2: Tyler builds a world
+│   ├── start_story.py         # phase 3: sets up a new story (no AI involved)
+│   ├── write_chapter.py       # phase 3: writes the next chapter
+│   └── revise.py              # phase 3: 3-pass revision experiment + measurements
+├── phase1-research/
+│   ├── index.md               # every book and its status
+│   ├── raw-texts/             # the books themselves (public domain)
+│   ├── sources/<book>/        # one analysis per agent + state.json
+│   └── synthesis/             # one running summary per agent
+├── phase2-world/
+│   ├── CONSTRAINTS.md         # rules no agent may break
+│   └── worlds/<world>/        # architecture.json, canon.json, STYLE_CONTRACT.md
+└── phase3-fiction/
+    ├── REJECTION_CRITERIA.md  # when a chapter counts as bad, in writing
+    └── stories/<story>/
+        ├── chapters/          # the chapters
+        ├── revision/          # revision passes, scene variants, selection note, measurements
+        ├── story_state.json   # characters, open and closed storylines, progress
+        └── writer-brain.md    # Tyler's own notes between chapters
+```
 
-## Setup
+## What 47 books taught me
 
-Requirements:
+The agents' running summaries had three jobs: collect patterns that repeat, keep good ideas even if they show up only once, and tell me when a topic was done. Here are some of the results.
 
-- Python 3.10+
-- The `claude` CLI (Claude Code), logged in
-- The `codex` CLI, logged in
-- The `agy` CLI, logged in, plus `pip install -r requirements.txt` (for `agy-headless-bridge`)
-- The `gh` CLI, logged in, and a GitHub repo with issues enabled (only for Phase 1)
+### Patterns that kept coming back
 
-There are no API keys in the code. Each CLI uses its own login.
+- **Thresholds decide everything.** A door, a shore, the edge of the land of the dead. How a character crosses it matters more than who they are. Found in 16 books, from the *Odyssey* to *Dede Korkut* to gothic novels.
+- **Knowing your fate doesn't save you.** The prophecy is heard, understood, and comes true anyway. 7 books: the *Poetic Edda*, *Romeo and Juliet*, Plato's *Republic*, Irish and Norse epics.
+- **You can't win immortality, only a name.** Gilgamesh fails, Achilles would rather be a living servant than a dead king. What survives is the story people tell about you.
+- **Gods never act alone.** In Japanese, Norse and gothic stories alike, a higher power gives the gift, but a human hand has to use it.
+- **Something sacred turns dirty the moment someone owns it.** In the Greek myth of King Minos, a holy bull kept as private property becomes a monster.
+- **A lie repeated by an institution becomes holy.** In *Don Quixote* and *The Castle of Otranto*, a story kept going long enough turns into truth.
+- **Every ruling order invents a "wild" outsider** to prove it is needed.
+
+### Ideas worth stealing for a world
+
+These showed up in a single book, but the agents kept them because they work as world-building tools:
+
+- **Earning your second name** (*Dede Korkut*): you're born with one name and earn the second only after the community has heard and confirmed your deed.
+- **Healers who must tell the origin story** (*Kalevala*): to cure a wound you have to tell how the thing that caused it came to be. Get the story wrong and the wound gets worse.
+- **A monster whose life is hidden in nested boxes** (Turkish folk tales): island, ox, golden cage, dove. The hero has only one life, and wins because of it.
+- **Sword and scabbard as two separate powers** (*Le Morte d'Arthur*): one lets you win, the other keeps you alive. Lose one and the other is worth little.
+- **An epic that keeps its own contradictions** (*The Cattle-Raid of Cooley*): "some say it happened this way" stays in the text, and each version backs a different family's claim. Useful for keeping a game world stable while letting players tell it their way.
+- **A law book with margins** (Spinoza's *Ethics*): the rules never change, but the notes in the margins pile up, and the real fight is over which note counts.
+
+### When to stop
+
+After a while some topics stopped teaching anything new: thresholds, fate, how power justifies itself, women traded for alliances. The summaries flagged these as "saturated", which told me to stop adding books like them.
+
+### Gaps the agents found
+
+- **Too European.** Almost nothing from China, India, Africa or Southeast Asia, so some "universal" patterns might just be one culture repeating itself.
+- **Only kings and heroes.** Nobody runs a shop, works a trade or helps the neighbours.
+- **Few women talking to women.** Strong female characters, but hardly any long conversations between women where they carry the story.
+- **No modern formats.** No chat logs, in-game documents or recorded messages. For worlds meant for games, this is the biggest gap.
+
+### An open question
+
+In 47 books the agents found no creation story where the world is made well and stays that way. The Norse world is built from a murdered giant, the Finnish one hatches from an accident, the gothic novels start from an old crime. Maybe that's the lesson: a perfect creation leaves nothing to tell, so every world needs a crack in it. Or maybe I just haven't read the right books yet (see "Too European" above). I don't know yet, and I'd like to find out.
+
+## The hard problem: shallow prose
+
+The first chapters the system wrote were clean, correct and boring. Lots of one-sentence paragraphs, each ending on a short, quotable line. Nothing was wrong, and nothing stayed with you.
+
+I wanted to know why. Was it the model, or the way the system asked it to write? So I did two things.
+
+**1. I wrote down what "bad" means.** [`REJECTION_CRITERIA.md`](phase3-fiction/REJECTION_CRITERIA.md) lists the reasons a chapter gets rejected, as concrete rules: too many one-sentence paragraphs, no thought that develops for more than a few lines, dialogue that sounds like an interrogation, feelings that are named instead of shown. Some rules can be counted, some need judgment.
+
+**2. I changed the loop, not the model.** [`revise.py`](scripts/revise.py) takes a finished chapter and runs the same model through three passes: merge and deepen, write three versions of two key scenes and pick one using the written rules, then cut what isn't needed. After each pass it measures the text.
+
+This is the result on the demo chapter. Every version is in [`story-1/revision/`](phase3-fiction/stories/story-1/revision/), so you can read them and check the numbers yourself:
+
+| | Original | Pass 1: merge | Pass 2: pick scenes | Pass 3: cut | Goal |
+|---|---|---|---|---|---|
+| Words | 3,325 | 5,294 | 4,153 | 3,731 | |
+| Paragraphs | 138 | 31 | 31 | 31 | |
+| One-sentence paragraphs | 57 (41%) | 0 | 0 | 0 | 2 or fewer |
+| Thoughts that run 150+ words | 0 | 15 | 8 | 8 | 3 or more |
+| Longest line of dialogue (words) | 69 | 69 | 182 | 182 | 50+ |
+| Paragraphs ending on a "quotable" line | 29 | 7 | 8 | 10 | 2 or fewer |
+
+**What got better.** The structure changed completely. The best single gain came from scene selection: at the chapter's turning point, the original had two short lines ("You should have told me in March." / "You had work."). The version that won gives Ada a 182-word speech where she blames her father and herself, and decides to stay:
+
+> "That's the lamp's account, and I asked for yours. [...] I came here with a month written down as though need observed a notice period. [...] But I know I will not go back merely because the date I chose has arrived, and I will not help you call that weather."
+
+The [selection note](phase3-fiction/stories/story-1/revision/001-p2-selection-note.md) explains why each of the other versions lost, each time pointing to a written rule.
+
+**What didn't.** The quotable endings dropped from 29 to 7 in the first pass, then the next two passes brought them back up to 10. I ran the same experiment on a chapter in my private run, in a different world and a different language, and got the same shape. So this isn't a one-off; it's a habit of the model that the loop can't break yet.
+
+**What I didn't expect: the model gamed my metric.** One-sentence paragraphs went to zero, but partly by cheating. Reading pass 3, I found paragraphs like this:
+
+> "That's a small case for twenty-one years." "Four shirts, two skirts, and my work clothes." Mara nudged the postbag away. "Bookkeepers need a uniform now?" "Only for dangerous sums."
+
+Two people talking, stuffed into one paragraph. That breaks a basic rule of prose and makes the dialogue harder to follow, and my measurement didn't catch it. When a number becomes the target, the model can hit the number and miss the point. That's the main reason the next step is an evaluation system with a second model that judges the text, not just counts it.
+
+## Where this is going
+
+This isn't finished. Here's what I'm aiming for and what's still missing.
+
+**The goal.** A world-building engine for games and tabletop RPGs like Dungeons & Dragons: build a world fast, then keep it consistent across many sessions and many stories. And a text generator for projects that need that kind of story material, one that uses the patterns found in the stories humanity already shares as its method.
+
+**What's missing today**
+
+- **Consistency is written down, but not checked.** The canon, the rules and the story state exist, and Tyler reads them before every chapter. Nothing yet verifies afterwards that a chapter didn't break them.
+- **An evaluation system.** Turn `REJECTION_CRITERIA.md` into a check that runs after every chapter: the countable rules through the existing measurements, the judgment rules through a second model that didn't write the text, and the canon rules against `canon.json`. Then track the scores over a whole story to catch drift, and catch tricks like the one above.
+- **Revision as a normal step.** Today `revise.py` is a separate experiment. It should become an optional step after each chapter, with an extra pass aimed at the "quotable endings" habit and a rule that keeps one speaker per paragraph.
+- **Tests.** A small test suite for the state logic (rounds, decisions, resets) using fake agent answers, so it can run without any AI tools.
+- **More of the world's stories.** The gaps listed above: sources from outside Europe, everyday life, and modern formats like chat logs and in-game documents.
+- **Small fixes.** `last_seen_chapter` only updates when Tyler lists a character as changed, so it can stay at 0. The demo chapter shows this.
+
+## Running it yourself
+
+<details>
+<summary>Setup and commands</summary>
+
+You'll need Python 3.10+ and these command-line tools, each logged in: `claude` (Claude Code), `codex`, `agy` (plus `pip install -r requirements.txt`), and `gh` with a GitHub repo that has issues turned on (phase 1 only). There are no API keys in the code; each tool uses its own login.
 
 ```bash
 git clone https://github.com/cnrsamet/mythopoeia-agents.git
 cd mythopoeia-agents
-cp .env.example .env    # optional: change model names or the repo path
+cp .env.example .env    # optional: change model names
 ```
 
-`MYTHOPOEIA_REPO_PATH` defaults to the repo root. Project settings (current source, world, story, element switches) live in `scripts/config.py`.
+All commands run from `scripts/`. Settings live in `scripts/config.py`.
 
-## Running
-
-All commands run from `scripts/`.
-
-**Phase 1, one source:**
-1. Put the primary text in `phase1-research/raw-texts/{prefix}.txt` (optional; without it, agents search the web).
-2. Open a GitHub issue for the source.
-3. Set `SOURCE_NAME`, `CATEGORY`, `ISSUE_NUMBER` and `SOURCE_PREFIX` in `config.py`.
-4. `python run.py`. This runs pass 1 and pass 2, repeating up to 6 loops until all three agents agree. `pass1.py` and `pass2.py` can also be run on their own.
-
-**Synthesis:** `python synthesis.py`. Run it again until every agent is up to date.
-
-**Phase 2, a world:** set `PREFERRED_GENRE`, `COMPLEXITY_PREFERENCE` and the `ELEMENT_*` switches in `config.py`, then `python build_world.py`. Elements left empty are inactive and are not generated at all. The script stops for human review and does not start Phase 3 on its own.
-
-**Phase 3, a story:**
-```bash
-python start_story.py           # deterministic, no LLM: creates story-N from architecture.json
-python write_chapter.py         # one chapter per run
-python revise.py 001            # 3-pass revision experiment on chapter 001
-python revise.py 001 --measure  # only rebuild the measurement table
-```
-
-## Sample output
-
-### What is real in this repo
-
-| Content | Where it came from |
+| Step | Command |
 |---|---|
-| 18 Phase 1 analyses (`phase1-research/sources/`) and their `state.json` | Produced by the pipeline in the private repo, in Turkish. **Translated to English** for this repo; content and structure unchanged. |
-| Synthesis files (`phase1-research/synthesis/`) | **Hand-written demo**, condensed from the six English analyses. The private synthesis covered 48 sources, including copyrighted ones, so it is not included. |
-| Demo world *Saltreach* (`phase2-world/worlds/Saltreach/`) | **Hand-written seed** in the exact format `build_world.py` produces, so Phase 3 can run without the private worlds. |
-| `phase3-fiction/stories/story-1/` | **Real pipeline output.** `start_story.py` created the story; `write_chapter.py` (Tyler/codex) wrote chapter 1, its writer-brain entry, the state update and the canon entries in one run. Not edited. |
-| Raw texts (`phase1-research/raw-texts/`) | Project Gutenberg editions, public domain. |
+| Research one book (set `SOURCE_NAME`, `ISSUE_NUMBER`, `SOURCE_PREFIX` first) | `python run.py` |
+| Update the running summaries | `python synthesis.py` |
+| Build a world (set the `ELEMENT_*` switches first) | `python build_world.py` |
+| Start a story (no AI) | `python start_story.py` |
+| Write the next chapter | `python write_chapter.py` |
+| Revise a chapter | `python revise.py 001` |
+| Only redo the measurements | `python revise.py 001 --measure` |
 
-### Phase 1: one source, three lenses
+Developed and tested on Windows only.
 
-The same moment in the *Odyssey* (the bed built on a living olive tree), read by three agents in independent passes:
-
-> **Erendiz:** "Odysseus is the best liar in the whole poem; so a story/word can never be the final proof. The final proof is *an object rooted in the earth that cannot be carried away*. The ground of identity is not the word, it is the trunk."
-
-> **Tyler:** "Penelope's test of the bed asks for knowledge of how it was made that belongs only to the husband... So identity is not announced as 'believe this face'; it is built by an object, a body and a shared memory confirming each other."
-
-> **Wilson** (pass 2, after reading Erendiz): "That the conflict can only be stopped by an intervention imposed from above reveals the dead end of blood-tie politics between households."
-
-### Phase 3: one chapter in the demo world
-
-From [`chapters/001.md`](phase3-fiction/stories/story-1/chapters/001.md), where Ada's father finally admits how bad his hands are. Note the Style Contract rule at work: a character speaks several sentences without interruption.
-
-> "Since March," he said. "Worse since August. The right is better in the morning. The left is no use for fine work. I can fill the oil reservoir and wind the lens weight, but I can't always get the char even. An uneven wick smokes, the chimney clouds, and the light loses distance. There. That's the account."
->
-> It was six sentences, Ada noted, and more than he had written her on the subject in seven months.
-
-After the chapter, Tyler returned a `CHAPTER_UPDATE` block and the script applied it. `story_state.json` now tracks four open threads, for example:
-
-```json
-{ "thread": "Ada has noticed the old logbook covering the year the Wren sank.", "weight": "main", "opened_chapter": 1 }
-```
-
-and three permanent facts were appended to the world's `canon.json`. Tyler also left a planning note for itself in [`writer-brain.md`](phase3-fiction/stories/story-1/writer-brain.md) ("Avoid explaining either gesture too early").
-
-## Design decisions and challenges
-
-**Lens-based roles and voice separation.** Function-based roles ("researcher", "writer", "critic") tend to blur into one voice over a long run. Here, each agent keeps one lens for the whole of Phase 1, and the three voices meet exactly once: when Tyler reads all three syntheses to build a world.
-
-**Independent pass first, shared pass second.** In pass 1, agents are told not to look at each other's files. In pass 2 there are only three outcomes: a real gap reopens pass 1, a valuable link is appended as a short `## Pass 2 Note`, or the agent approves. Agents may not rewrite their files after reading the others, so the independent reading is kept.
-
-**Machine-readable endings.** The whole state machine depends on agents ending with a decision block, not a friendly closing line. The prompts say plainly that a missing `DECISION` line means the same task comes back next time. Unclear results are stored as `unclear` instead of being guessed.
-
-**Safety rails for unattended agents.** `run.py` stops after 6 loops and asks for a human, because a loop that does not end usually means a real disagreement. Claude runs with an explicit tool allowlist and a denylist (`rm`, `curl`, `git push`, `sudo`...). Agents cannot delete files, so temp files must start with `.tmp_` and the scripts clean them up. `revise.py` re-checks the source chapter after every pass and writes it back if an agent changed it.
-
-**The user keeps control of scope.** Left alone, a world-building agent tends to add peoples, languages and magic "just in case". In `build_world.py`, every world element is **inactive unless the user fills it in**, and inactive fields must be absent from the JSON, not empty. The target chapter count is also set by the user, because models tend to suggest much shorter stories than intended. `CONSTRAINTS.md` holds binding negative rules ("this must not happen") that come before the agent's own choices.
-
-**Lessons from reading the output.** The seven base rules in every Style Contract (quotation marks, at least one long uninterrupted line of dialogue per chapter, varied warmth, a hook for every new term, and so on) came from earlier reader tests, where readers listed what made chapters hard to follow. They are written into the world-building prompt so every new world inherits them.
-
-**Shallow prose and the revision experiment.** Chapters written in a single pass were clean but shallow: many one-sentence paragraphs, each closing on a short quotable line. The open question was whether the cause was the model or the loop. `revise.py` keeps the same model (Tyler) and changes only the loop: condense, generate three variants of two key scenes and select by written criteria (`REJECTION_CRITERIA.md`), then prune. A measurement table compares the versions. On one chapter in the private repo, the measured structure changed a lot:
-
-| Metric | Original | After 3 passes | Target |
-|---|---|---|---|
-| Paragraphs | 109 | 26 | |
-| Single-sentence paragraphs | 52 | 2 | at most 2 |
-| Unbroken developments of 150+ words | 0 | 5 | at least 3 |
-| Longest single line of dialogue (words) | 11 | 114 | 50+ |
-| Aphorism-like paragraph endings | 28 | 9 | at most 2 |
-
-The last row is the honest part: the condensing pass brought aphorism endings to 0, but the variant and pruning passes brought them back up. The loop fixed structure much better than it fixed this habit.
-
-The demo chapter in this repo shows the same single-pass pattern in a new world and in English: 138 paragraphs, 41% of them single sentences, no unbroken development of 150+ words, 29 aphorism-like endings (from `revise.py`'s `measure()`). It reads cleanly, and by the written criteria it would still be rejected. The revision loop has not been run on it.
-
-**Known limits.**
-- `last_seen_chapter` is only updated when Tyler lists a character in `character_updates`, so it can stay at 0. The demo chapter shows this: all three characters appear, but the field is still 0.
-- The text metrics in `revise.py` are simple heuristics (paragraph splits, sentence regex, a word-count proxy for aphorisms). They show trends; they are not a quality score.
-- The scripts were developed and run on Windows; other platforms are not tested.
-- There are no automated tests.
-
-## Roadmap
-
-- **Evaluation system.** Turn `REJECTION_CRITERIA.md` into an automated check after every chapter: the measurable A rules from the existing `measure()` function, the judgment-based B rules from an LLM judge outside the writing model, and C rules (canon, constraints, unintroduced terms) checked against `canon.json` and `architecture.json`. Track the scores across chapters to catch drift.
-- Make the revision loop an optional step of `write_chapter.py` instead of a separate experiment, and add a pass aimed at aphorism endings.
-- A small test suite for the state machine (round logic, pass-2 reset, decision parsing, index updates) using fake agent outputs.
-- Fix `last_seen_chapter` by detecting character names in the chapter text.
-- Make the output language a setting (the original runs wrote Turkish).
+</details>
 
 ## License
 
-Code and documentation: [MIT](LICENSE). The texts in `phase1-research/raw-texts/` are Project Gutenberg editions and keep their own license headers.
+Code and documentation: [MIT](LICENSE). The books in `phase1-research/raw-texts/` are from Project Gutenberg and keep their own license headers.
