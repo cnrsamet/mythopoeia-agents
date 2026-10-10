@@ -68,8 +68,8 @@ Requirements:
 There are no API keys in the code. Each CLI uses its own login.
 
 ```bash
-git clone <this repo>
-cd mythopoeia-public
+git clone https://github.com/cnrsamet/mythopoeia-agents.git
+cd mythopoeia-agents
 cp .env.example .env    # optional: change model names or the repo path
 ```
 
@@ -176,3 +176,7 @@ The demo chapter in this repo shows the same single-pass pattern in a new world 
 - A small test suite for the state machine (round logic, pass-2 reset, decision parsing, index updates) using fake agent outputs.
 - Fix `last_seen_chapter` by detecting character names in the chapter text.
 - Make the output language a setting (the original runs wrote Turkish).
+
+## License
+
+Code and documentation: [MIT](LICENSE). The texts in `phase1-research/raw-texts/` are Project Gutenberg editions and keep their own license headers.
