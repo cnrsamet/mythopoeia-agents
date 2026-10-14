@@ -216,6 +216,8 @@ cp .env.example .env    # optional: change model names
 
 All commands run from `scripts/`. Settings live in `scripts/config.py`.
 
+Phase 1 posts to issues on whatever repo `gh` points at. Point `origin` at your own fork or repo, open an issue there for the book, and set `ISSUE_NUMBER` to it; the `6` in `config.py` is left over from my run. Agents only see issue comments written by your own `gh` account.
+
 | Step | Command |
 |---|---|
 | Research one book (set `SOURCE_NAME`, `ISSUE_NUMBER`, `SOURCE_PREFIX` first) | `python run.py` |

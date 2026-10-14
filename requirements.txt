@@ -1,1 +1,1 @@
-agy-headless-bridge
+agy-headless-bridge==1.2.1

@@ -21,6 +21,8 @@ ELEMENT_HISTORICAL_EVENTS = getattr(_config, "ELEMENT_HISTORICAL_EVENTS", "")
 ELEMENT_MAGIC = getattr(_config, "ELEMENT_MAGIC", "")
 
 SETUP_STATE_PATH = "phase2-world/setup-state.json"
+# The name is written into config.py and used as a folder name, so it is kept to safe characters.
+WORLD_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")
 CONSTRAINTS_FILE = "phase2-world/CONSTRAINTS.md"
 SYNTHESIS_FILES = [
     "phase1-research/synthesis/tyler.md",
@@ -40,6 +42,10 @@ def update_config_world_name(world_name: str, log_file) -> bool:
     config_path = Path(__file__).resolve().parent / "config.py"
     if not config_path.exists():
         log(f"WARNING: {config_path} not found, set WORLD_NAME by hand.", log_file)
+        return False
+
+    if not WORLD_NAME_PATTERN.fullmatch(world_name):
+        log(f"WARNING: world name {world_name!r} is not safe, config.py left unchanged.", log_file)
         return False
 
     content = config_path.read_text(encoding="utf-8")
@@ -364,9 +370,13 @@ def build_world() -> bool:
         stop_event.set()
         watcher.join(timeout=2)
 
-    decision = find_decision(output)
+    decision = find_decision(output) if ok else "UNCLEAR"
     new_reason = find_reason(output) if decision == "SECOND_ROUND_NEEDED" else ""
-    new_name = find_world_name(output) or current_name
+    found_name = find_world_name(output)
+    if found_name and not WORLD_NAME_PATTERN.fullmatch(found_name):
+        log(f"WARNING: ignoring unsafe world name {found_name!r} (allowed: letters, digits, '-', '_').", log_file)
+        found_name = ""
+    new_name = found_name or current_name
 
     if decision == "COMPLETE":
         record = {"status": "complete", "round": round_no, "reason": "", "world_name": new_name}

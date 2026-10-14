@@ -120,17 +120,54 @@ def clean_temp_files(repo_path: str, log_file: Path = None):
 
 
 def find_decision(text: str) -> str:
-    m = re.search(r"DECISION:\s*(COMPLETE|SECOND_ROUND_NEEDED|ENRICHMENT)", text or "", re.IGNORECASE)
-    if m:
-        return m.group(1).upper()
+    # The last match wins: the block is required at the very end, and an agent
+    # that echoes the option list earlier in its answer must not decide the state.
+    matches = re.findall(r"DECISION:\s*(COMPLETE|SECOND_ROUND_NEEDED|ENRICHMENT)", text or "", re.IGNORECASE)
+    if matches:
+        return matches[-1].upper()
     return "UNCLEAR"
 
 
 def find_reason(text: str) -> str:
-    m = re.search(r"REASON:\s*(.+)", text or "", re.IGNORECASE)
-    if m:
-        return m.group(1).strip()
+    matches = re.findall(r"REASON:\s*(.+)", text or "", re.IGNORECASE)
+    if matches:
+        return matches[-1].strip()
     return ""
+
+
+def trusted_issue_comments(repo_path: str, issue_number: int, log_file: Path) -> str:
+    # Only comments by the logged-in gh account. The agents comment through this
+    # same account, so their notices are kept; anyone else's comment on a public
+    # repo is dropped and never reaches an agent's prompt.
+    gh = shutil.which("gh") or "gh"
+    try:
+        me = subprocess.run(
+            [gh, "api", "user", "--jq", ".login"],
+            cwd=repo_path, capture_output=True, text=True, timeout=60,
+            encoding="utf-8", errors="replace",
+        )
+        view = subprocess.run(
+            [gh, "issue", "view", str(issue_number), "--json", "comments"],
+            cwd=repo_path, capture_output=True, text=True, timeout=60,
+            encoding="utf-8", errors="replace",
+        )
+    except Exception as e:
+        log(f"Could not read issue #{issue_number} comments: {e}", log_file)
+        return ""
+    login = (me.stdout or "").strip()
+    if me.returncode != 0 or not login or view.returncode != 0:
+        log(f"Could not read issue #{issue_number} comments: {(me.stderr or view.stderr or '')[:500]}", log_file)
+        return ""
+    try:
+        comments = json.loads(view.stdout).get("comments", [])
+    except Exception:
+        return ""
+
+    kept = [c for c in comments if (c.get("author") or {}).get("login") == login]
+    dropped = len(comments) - len(kept)
+    if dropped:
+        log(f"Issue #{issue_number}: ignored {dropped} comment(s) not written by '{login}'.", log_file)
+    return "\n\n---\n\n".join(c.get("body", "").strip() for c in kept)
 
 
 def find_completed_sources(repo_path: str) -> list:
@@ -199,7 +236,7 @@ def run_claude(
              "--model", model,
              "--allowedTools",
              "Read,Write,Edit,WebSearch,WebFetch,"
-             "Bash(gh issue comment *),Bash(gh issue view *)",
+             "Bash(gh issue comment *)",
              "--disallowedTools",
              "Bash(rm *),Bash(del *),Bash(curl *),Bash(Invoke-WebRequest *),"
              "Bash(iwr *),Bash(sudo *),Bash(chmod *),Bash(git push*)",

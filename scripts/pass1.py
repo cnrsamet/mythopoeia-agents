@@ -123,7 +123,8 @@ def run_pass1() -> bool:
         prompt = task_prompt(agent, role_file, file_path, round_no, reason)
         ok, output = run_fn(prompt, REPO_PATH, log_file, agent_name=agent)
 
-        decision = find_decision(output)
+        # A failed or timed-out run never counts as a decision, even if its partial output has one.
+        decision = find_decision(output) if ok else "UNCLEAR"
         new_reason = find_reason(output) if decision == "SECOND_ROUND_NEEDED" else ""
 
         state[agent_key] = {

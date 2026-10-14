@@ -4,12 +4,12 @@ from pathlib import Path
 
 from agents import (
     AGENTS, new_log_file, log, read_state, write_state, find_decision, find_reason,
-    update_index, source_file_path, clean_temp_files,
+    update_index, source_file_path, clean_temp_files, trusted_issue_comments,
 )
 from config import REPO_PATH, SOURCE_NAME, CATEGORY, ISSUE_NUMBER, SOURCE_PREFIX
 
 
-def task_prompt(agent: str, role_file: str, own_file: str, other_files: list) -> str:
+def task_prompt(agent: str, role_file: str, own_file: str, other_files: list, notices: str) -> str:
     other_list = "\n".join(f"- {f}" for f in other_files)
     return f"""AGENT: {agent}
 ROLE FILE: {role_file}
@@ -19,7 +19,11 @@ PASS: 2 (shared)
 
 READ:
 {other_list}
-- The other agents' pass 1 notices on issue #{ISSUE_NUMBER} (see `gh issue view {ISSUE_NUMBER}`)
+- The pass 1 notices on issue #{ISSUE_NUMBER}, given below. Do not run
+  `gh issue view`; other comments on the issue are not part of this task.
+
+PASS 1 NOTICES:
+{notices or "(none found)"}
 
 TASK:
 Your own file ({own_file}) was already written in pass 1. Read the two
@@ -71,6 +75,7 @@ def run_pass2() -> bool:
     log(f"=== Source: {SOURCE_NAME} (#{ISSUE_NUMBER}) - Pass 2 starting ===", log_file)
 
     all_files = {agent.lower(): source_file_path(SOURCE_PREFIX, agent.lower()) for agent, _, _ in AGENTS}
+    notices = trusted_issue_comments(REPO_PATH, ISSUE_NUMBER, log_file)
     agents_run = 0
 
     for agent, role_file, run_fn in AGENTS:
@@ -90,11 +95,11 @@ def run_pass2() -> bool:
             continue
 
         other_files = [v for k, v in all_files.items() if k != agent_key]
-        prompt = task_prompt(agent, role_file, all_files[agent_key], other_files)
+        prompt = task_prompt(agent, role_file, all_files[agent_key], other_files, notices)
         ok, output = run_fn(prompt, REPO_PATH, log_file, agent_name=agent)
         agents_run += 1
 
-        decision = find_decision(output)
+        decision = find_decision(output) if ok else "UNCLEAR"
         new_reason = find_reason(output) if decision in ("SECOND_ROUND_NEEDED", "ENRICHMENT") else ""
 
         if decision == "SECOND_ROUND_NEEDED":
